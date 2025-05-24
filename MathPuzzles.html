@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Puzzles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        /* Ensure inputs and buttons have a consistent look */
+        input[type="number"], input[type="text"], button {
+            transition: all 0.2s ease-in-out;
+        }
+        input[type="number"]:focus, input[type="text"]:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Blue focus ring */
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-200">
+    <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center space-y-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Math Puzzles Game</h1>
+
+        <div id="age-input-section" class="space-y-4">
+            <label for="ageInput" class="block text-gray-700 text-lg font-medium">
+                Please enter your age (5-18):
+            </label>
+            <input
+                type="number"
+                id="ageInput"
+                min="5"
+                max="18"
+                placeholder="e.g., 10"
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-center text-lg"
+            />
+            <button
+                id="startGameButton"
+                class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+                Start Game
+            </button>
+        </div>
+
+        <div id="puzzle-section" class="hidden space-y-4">
+            <p id="questionDisplay" class="text-2xl font-semibold text-gray-900"></p>
+            <label for="answerInput" class="block text-gray-700 text-lg font-medium">
+                Your answer:
+            </label>
+            <input
+                type="number"
+                id="answerInput"
+                placeholder="Enter your answer"
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-center text-lg"
+            />
+            <button
+                id="submitAnswerButton"
+                class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+                Submit Answer
+            </button>
+            <button
+                id="nextPuzzleButton"
+                class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 mt-2"
+            >
+                Next Puzzle
+            </button>
+        </div>
+
+        <p id="feedbackDisplay" class="text-xl font-medium mt-4"></p>
+        <p id="messageDisplay" class="text-red-600 text-base mt-2"></p>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const ageInputSection = document.getElementById('age-input-section');
+        const puzzleSection = document.getElementById('puzzle-section');
+        const ageInput = document.getElementById('ageInput');
+        const startGameButton = document.getElementById('startGameButton');
+        const questionDisplay = document.getElementById('questionDisplay');
+        const answerInput = document.getElementById('answerInput');
+        const submitAnswerButton = document.getElementById('submitAnswerButton');
+        const nextPuzzleButton = document.getElementById('nextPuzzleButton');
+        const feedbackDisplay = document.getElementById('feedbackDisplay');
+        const messageDisplay = document.getElementById('messageDisplay');
+
+        let currentAge = 0;
+        let correctAnswer = 0;
+
+        // Event listener for starting the game
+        startGameButton.addEventListener('click', () => {
+            const age = parseInt(ageInput.value);
+            messageDisplay.textContent = ''; // Clear previous messages
+            feedbackDisplay.textContent = ''; // Clear previous feedback
+
+            if (isNaN(age) || age < 5 || age > 18) {
+                messageDisplay.textContent = 'Age must be between 5 and 18. Please enter a valid number.';
+                return;
+            }
+
+            currentAge = age;
+            ageInputSection.classList.add('hidden'); // Hide age input
+            puzzleSection.classList.remove('hidden'); // Show puzzle section
+            generateAndSolvePuzzle(); // Generate the first puzzle
+        });
+
+        // Event listener for submitting the answer
+        submitAnswerButton.addEventListener('click', () => {
+            checkAnswer();
+        });
+
+        // Event listener for generating the next puzzle
+        nextPuzzleButton.addEventListener('click', () => {
+            generateAndSolvePuzzle();
+            feedbackDisplay.textContent = ''; // Clear feedback for new puzzle
+            messageDisplay.textContent = ''; // Clear any messages
+            answerInput.value = ''; // Clear answer input
+            answerInput.focus(); // Focus on the answer input
+        });
+
+        // Allow pressing Enter in answer input to submit
+        answerInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission
+                checkAnswer();
+            }
+        });
+
+        /**
+         * Generates a math puzzle based on the user's age.
+         */
+        function generateAndSolvePuzzle() {
+            let question = "";
+            let num1, num2, num3, a, b, c, val1, val2, base, percent, coeff, constant, result;
+            let type;
+
+            // Determine difficulty based on age
+            if (currentAge >= 5 && currentAge <= 7) {
+                // Simple addition/subtraction within 10-20
+                num1 = Math.floor(Math.random() * 10) + 1; // 1-10
+                num2 = Math.floor(Math.random() * 10) + 1; // 1-10
+                if (Math.random() < 0.5) { // Randomly choose addition or subtraction
+                    question = `What is ${num1} + ${num2}?`;
+                    correctAnswer = num1 + num2;
+                } else {
+                    // Ensure result is not negative for subtraction
+                    if (num1 < num2) {
+                        let temp = num1;
+                        num1 = num2;
+                        num2 = temp;
+                    }
+                    question = `What is ${num1} - ${num2}?`;
+                    correctAnswer = num1 - num2;
+                }
+            } else if (currentAge >= 8 && currentAge <= 10) {
+                // Addition/subtraction within 100, simple multiplication/division
+                type = Math.floor(Math.random() * 4); // 0:add, 1:sub, 2:mul, 3:div
+
+                switch (type) {
+                    case 0: // Addition
+                        num1 = Math.floor(Math.random() * 90) + 10; // 10-99
+                        num2 = Math.floor(Math.random() * 90) + 10;
+                        question = `What is ${num1} + ${num2}?`;
+                        correctAnswer = num1 + num2;
+                        break;
+                    case 1: // Subtraction
+                        num1 = Math.floor(Math.random() * 90) + 10;
+                        num2 = Math.floor(Math.random() * (num1 - 5)) + 5; // Ensure num1 > num2 and result is at least 5
+                        question = `What is ${num1} - ${num2}?`;
+                        correctAnswer = num1 - num2;
+                        break;
+                    case 2: // Multiplication (single digit)
+                        num1 = Math.floor(Math.random() * 9) + 2; // 2-10
+                        num2 = Math.floor(Math.random() * 9) + 2; // 2-10
+                        question = `What is ${num1} * ${num2}?`;
+                        correctAnswer = num1 * num2;
+                        break;
+                    case 3: // Division (exact)
+                        num2 = Math.floor(Math.random() * 9) + 2; // Divisor 2-10
+                        correctAnswer = Math.floor(Math.random() * 9) + 2; // Quotient 2-10
+                        num1 = num2 * correctAnswer; // Dividend
+                        question = `What is ${num1} / ${num2}?`;
+                        break;
+                }
+            } else if (currentAge >= 11 && currentAge <= 13) {
+                // Two-step operations, multiplication/division with larger numbers, basic fractions/decimals
+                type = Math.floor(Math.random() * 3); // 0:two-step, 1:larger mul, 2:larger div
+
+                switch (type) {
+                    case 0: // Two-step operation (e.g., (A + B) * C)
+                        num1 = Math.floor(Math.random() * 20) + 5;
+                        num2 = Math.floor(Math.random() * 20) + 5;
+                        num3 = Math.floor(Math.random() * 5) + 2;
+                        if (Math.random() < 0.5) {
+                            question = `What is (${num1} + ${num2}) * ${num3}?`;
+                            correctAnswer = (num1 + num2) * num3;
+                        } else {
+                            question = `What is (${num1} - ${num2}) + ${num3}?`;
+                            correctAnswer = (num1 - num2) + num3;
+                        }
+                        break;
+                    case 1: // Larger multiplication
+                        num1 = Math.floor(Math.random() * 50) + 10;
+                        num2 = Math.floor(Math.random() * 10) + 2;
+                        question = `What is ${num1} * ${num2}?`;
+                        correctAnswer = num1 * num2;
+                        break;
+                    case 2: // Larger division (exact)
+                        num2 = Math.floor(Math.random() * 15) + 5; // Divisor 5-19
+                        correctAnswer = Math.floor(Math.random() * 15) + 5; // Quotient 5-19
+                        num1 = num2 * correctAnswer; // Dividend
+                        question = `What is ${num1} / ${num2}?`;
+                        break;
+                }
+            } else if (currentAge >= 14 && currentAge <= 16) {
+                // Order of operations, basic algebra (solving for x), percentages
+                type = Math.floor(Math.random() * 3); // 0:order of ops, 1:solve x, 2:percentage
+
+                switch (type) {
+                    case 0: // Order of operations (e.g., A + B * C)
+                        a = Math.floor(Math.random() * 15) + 5;
+                        b = Math.floor(Math.random() * 10) + 2;
+                        c = Math.floor(Math.random() * 5) + 2;
+                        question = `What is ${a} + ${b} * ${c}?`;
+                        correctAnswer = a + b * c;
+                        break;
+                    case 1: // Solve for x (e.g., A + x = B)
+                        val1 = Math.floor(Math.random() * 30) + 10;
+                        val2 = Math.floor(Math.random() * 30) + 10;
+                        if (Math.random() < 0.5) { // A + x = B
+                            question = `If ${val1} + x = ${val1 + val2}, what is x?`;
+                            correctAnswer = val2;
+                        } else { // x - A = B
+                            question = `If x - ${val1} = ${val2}, what is x?`;
+                            correctAnswer = val1 + val2;
+                        }
+                        break;
+                    case 2: // Percentage
+                        base = (Math.floor(Math.random() * 10) + 1) * 10; // Multiples of 10 for easier percentages
+                        percent = Math.floor(Math.random() * 5) * 5 + 10; // 10, 15, 20, 25, 30
+                        question = `What is ${percent}% of ${base}?`;
+                        correctAnswer = (base * percent) / 100;
+                        break;
+                }
+            } else if (currentAge >= 17 && currentAge <= 18) {
+                // More complex algebra, basic geometry formulas, word problems
+                type = Math.floor(Math.random() * 3); // 0:complex algebra, 1:geometry, 2:word problem
+
+                switch (type) {
+                    case 0: // Complex algebra (e.g., 2x + 5 = 15)
+                        coeff = Math.floor(Math.random() * 3) + 2; // Coefficient 2-4
+                        constant = Math.floor(Math.random() * 10) + 1; // Constant 1-10
+                        correctAnswer = Math.floor(Math.random() * 10) + 1; // Solution 1-10
+                        result = coeff * correctAnswer + constant;
+                        question = `If ${coeff}x + ${constant} = ${result}, what is x?`;
+                        break;
+                    case 1: // Basic geometry (Area of rectangle/triangle)
+                        let length = Math.floor(Math.random() * 10) + 5;
+                        let width = Math.floor(Math.random() * 10) + 5;
+                        if (Math.random() < 0.5) { // Area of rectangle
+                            question = `A rectangle has a length of ${length} units and a width of ${width} units. What is its area?`;
+                            correctAnswer = length * width;
+                        } else { // Area of triangle (base * height / 2)
+                            let base = Math.floor(Math.random() * 10) + 5;
+                            let height = (Math.floor(Math.random() * 5) + 2) * 2; // Ensure height is even for integer result
+                            question = `A triangle has a base of ${base} units and a height of ${height} units. What is its area?`;
+                            correctAnswer = (base * height) / 2;
+                        }
+                        break;
+                    case 2: // Simple word problem
+                        let item1 = Math.floor(Math.random() * 10) + 5;
+                        let item2 = Math.floor(Math.random() * 10) + 5;
+                        let price1 = Math.floor(Math.random() * 5) + 1;
+                        let price2 = Math.floor(Math.random() * 5) + 1;
+                        question = `John bought ${item1} apples at $${price1} each and ${item2} oranges at $${price2} each. How much did he spend in total?`;
+                        correctAnswer = (item1 * price1) + (item2 * price2);
+                        break;
+                }
+            }
+
+            questionDisplay.textContent = question;
+        }
+
+        /**
+         * Checks the user's answer against the correct answer.
+         */
+        function checkAnswer() {
+            const userAnswer = parseInt(answerInput.value);
+            messageDisplay.textContent = ''; // Clear previous messages
+
+            if (isNaN(userAnswer)) {
+                messageDisplay.textContent = 'Invalid input. Please enter a number.';
+                feedbackDisplay.textContent = ''; // Clear feedback
+                return;
+            }
+
+            if (userAnswer === correctAnswer) {
+                feedbackDisplay.textContent = 'Correct! Well done!';
+                feedbackDisplay.className = 'text-xl font-medium mt-4 text-green-700';
+            } else {
+                feedbackDisplay.textContent = `Incorrect. The correct answer was ${correctAnswer}.`;
+                feedbackDisplay.className = 'text-xl font-medium mt-4 text-red-700';
+            }
+        }
+    </script>
+</body>
+</html>
